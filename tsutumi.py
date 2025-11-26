@@ -16,7 +16,7 @@ SCOPES = [
 ]
 
 # フォルダ監視対象
-WATCH_FOLDER = r"C:\tsutumi"
+WATCH_FOLDER = r"/Users/ikefuku40/tsutumi"
 
 # ★ここに有効なアルバムIDを固定で設定（create_albumで取得したもの）
 ALBUM_ID = "AKIE58zAZLkeLUv2usOFGJMpk71lFz5oGHvHWAuwxqsNqiX3Qp9bweUS7ldoa6TPjPEA4K9hNX-T"

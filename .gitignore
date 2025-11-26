@@ -1,2 +1,11 @@
-# 機密情報はGit管理対象外
-credentials.json
+# すべてを除外
+*
+
+# .pyファイルだけを許可
+!*.py
+
+# .gitignoreファイル自体も管理対象に含める
+!.gitignore
+
+# requirements.txtも管理対象に含める（オプション）
+!requirements.txt
