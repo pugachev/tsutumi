@@ -5,6 +5,7 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+from google.auth.exceptions import RefreshError
 import pickle
 from requests.exceptions import SSLError
 
@@ -29,11 +30,21 @@ def get_credentials():
             creds = pickle.load(token)
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
+            try:
+                creds.refresh(Request())
+            except RefreshError:
+                # トークンが無効な場合は再認証
+                print("トークンが無効です。再認証を行います...")
+                if os.path.exists('token.pickle'):
+                    os.remove('token.pickle')
+                creds = None
+        
+        if not creds:
+            # 新規認証または再認証
             flow = InstalledAppFlow.from_client_secrets_file(
                 'credentials.json', SCOPES)
             creds = flow.run_local_server(port=0)
+        
         with open('token.pickle', 'wb') as token:
             pickle.dump(creds, token)
     return creds
