@@ -17,10 +17,10 @@ SCOPES = [
 ]
 
 # フォルダ監視対象
-WATCH_FOLDER = r"/Users/ikefuku40/ugaki"
+WATCH_FOLDER = r"/Users/ikefuku40/tsutumi"
 
 # ★ここに有効なアルバムIDを固定で設定（create_albumで取得したもの）
-ALBUM_ID = "AKIE58y8eZ2Gtsz5k-GKSUwtko9i97_lCl4ji-PFTZBYdYvn6_-eNtu-umZbL1WVo-kFCUlSlbuc"
+ALBUM_ID = "AKIE58zAZLkeLUv2usOFGJMpk71lFz5oGHvHWAuwxqsNqiX3Qp9bweUS7ldoa6TPjPEA4K9hNX-T"
 
 # 認証処理
 def get_credentials():
@@ -48,15 +48,6 @@ def get_credentials():
         with open('token.pickle', 'wb') as token:
             pickle.dump(creds, token)
     return creds
-
-def create_album(creds, title):
-    url = "https://photoslibrary.googleapis.com/v1/albums"
-    headers = {"Authorization": "Bearer " + creds.token}
-    body = {"album": {"title": title}}
-    response = requests.post(url, headers=headers, json=body)
-    album = response.json()
-    print("Created album:", album.get("title"), "ID:", album.get("id"))
-    return album.get("id")
 
 # 書き込み完了を待つ
 def wait_for_complete(file_path, timeout=30):
