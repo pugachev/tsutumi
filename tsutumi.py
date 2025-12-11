@@ -6,8 +6,8 @@ from watchdog.events import FileSystemEventHandler
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from google.auth.exceptions import RefreshError
-from requests.exceptions import SSLError
 import pickle
+from requests.exceptions import SSLError
 
 # GoogleフォトAPIのスコープ
 SCOPES = [
@@ -17,10 +17,10 @@ SCOPES = [
 ]
 
 # フォルダ監視対象
-WATCH_FOLDER = r"/Users/ikefuku40/ugaki"
+WATCH_FOLDER = r"/Users/ikefuku40/tsutumi"
 
 # ★ここに有効なアルバムIDを固定で設定（create_albumで取得したもの）
-ALBUM_ID = "AKIE58x36-StaOKhek0qSdoOrCpQVJxwToWXh4Q8lWPa_OX0xQcdfB-YZKdmwomG6t4-Jvt22A-9"
+ALBUM_ID = "AKIE58zAZLkeLUv2usOFGJMpk71lFz5oGHvHWAuwxqsNqiX3Qp9bweUS7ldoa6TPjPEA4K9hNX-T"
 
 # 認証処理
 def get_credentials():
@@ -44,6 +44,7 @@ def get_credentials():
             flow = InstalledAppFlow.from_client_secrets_file(
                 'credentials.json', SCOPES)
             creds = flow.run_local_server(port=0)
+        
         with open('token.pickle', 'wb') as token:
             pickle.dump(creds, token)
     return creds
@@ -205,9 +206,6 @@ if __name__ == "__main__":
     print("スクリプト起動中...")
     time.sleep(5)  # 起動直後のネット安定化待ち
     creds = get_credentials()
-
-    # ALBUM_ID = create_album(creds, "宇垣美里")
-    print("ALBUM_ID:", ALBUM_ID)
     event_handler = PhotoHandler(creds, ALBUM_ID)
     observer = Observer()
     observer.schedule(event_handler, WATCH_FOLDER, recursive=False)
