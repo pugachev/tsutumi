@@ -6,8 +6,8 @@ from watchdog.events import FileSystemEventHandler
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from google.auth.exceptions import RefreshError
-import pickle
 from requests.exceptions import SSLError
+import pickle
 
 # GoogleフォトAPIのスコープ
 SCOPES = [
@@ -24,29 +24,66 @@ ALBUM_ID = "AKIE58zAZLkeLUv2usOFGJMpk71lFz5oGHvHWAuwxqsNqiX3Qp9bweUS7ldoa6TPjPEA
 
 # 認証処理
 def get_credentials():
+    # LaunchAgent環境かどうかを確認
+    is_launch_agent = os.environ.get('XPC_SERVICE_NAME') is not None
+    
     creds = None
     if os.path.exists('token.pickle'):
         with open('token.pickle', 'rb') as token:
             creds = pickle.load(token)
+    
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             try:
+                print("トークンをリフレッシュ中...")
                 creds.refresh(Request())
-            except RefreshError:
-                # トークンが無効な場合は再認証
-                print("トークンが無効です。再認証を行います...")
-                if os.path.exists('token.pickle'):
-                    os.remove('token.pickle')
-                creds = None
+                print("✓ トークンのリフレッシュに成功しました")
+                # リフレッシュ成功したら保存
+                with open('token.pickle', 'wb') as token:
+                    pickle.dump(creds, token)
+                return creds
+            except RefreshError as e:
+                # トークンが無効な場合
+                error_msg = f"✗ トークンのリフレッシュに失敗しました: {e}"
+                print(error_msg)
+                if is_launch_agent:
+                    # LaunchAgent環境では自動再認証できない
+                    print("=" * 60)
+                    print("【重要】再認証が必要です")
+                    print("LaunchAgent環境では自動再認証ができません。")
+                    print("以下の手順で手動で再認証を行ってください：")
+                    print("1. ターミナルで以下を実行:")
+                    print("   cd /Users/ikefuku40/tsutumi")
+                    print("   rm token.pickle")
+                    print("   python3 tsutumi.py")
+                    print("2. ブラウザで認証を完了")
+                    print("3. 認証完了後、Ctrl+Cで終了")
+                    print("4. LaunchAgentを再起動:")
+                    print("   launchctl unload ~/Library/LaunchAgents/com.ikefuku40.tsutumi.plist")
+                    print("   launchctl load ~/Library/LaunchAgents/com.ikefuku40.tsutumi.plist")
+                    print("=" * 60)
+                    raise Exception("認証が必要です。上記の手順に従って再認証してください。")
+                else:
+                    # 通常の実行環境では自動再認証を試みる
+                    print("トークンが無効です。再認証を行います...")
+                    if os.path.exists('token.pickle'):
+                        os.remove('token.pickle')
+                    creds = None
         
         if not creds:
             # 新規認証または再認証
+            if is_launch_agent:
+                error_msg = "LaunchAgent環境では自動認証ができません。手動で認証してください。"
+                print(error_msg)
+                raise Exception(error_msg)
+            
             flow = InstalledAppFlow.from_client_secrets_file(
                 'credentials.json', SCOPES)
             creds = flow.run_local_server(port=0)
         
         with open('token.pickle', 'wb') as token:
             pickle.dump(creds, token)
+    
     return creds
 
 def create_album(creds, title):
@@ -205,15 +242,27 @@ class PhotoHandler(FileSystemEventHandler):
 if __name__ == "__main__":
     print("スクリプト起動中...")
     time.sleep(5)  # 起動直後のネット安定化待ち
-    creds = get_credentials()
-    event_handler = PhotoHandler(creds, ALBUM_ID)
-    observer = Observer()
-    observer.schedule(event_handler, WATCH_FOLDER, recursive=False)
-    observer.start()
-    print("Watching folder:", WATCH_FOLDER)
+    
     try:
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        observer.stop()
-    observer.join()
+        creds = get_credentials()
+        if not creds:
+            print("✗ 認証に失敗しました。スクリプトを終了します。")
+            exit(1)
+        
+        print("✓ 認証成功。監視を開始します。")
+        event_handler = PhotoHandler(creds, ALBUM_ID)
+        observer = Observer()
+        observer.schedule(event_handler, WATCH_FOLDER, recursive=False)
+        observer.start()
+        print("Watching folder:", WATCH_FOLDER)
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            observer.stop()
+        observer.join()
+    except Exception as e:
+        print(f"✗ エラーが発生しました: {e}")
+        import traceback
+        traceback.print_exc()
+        exit(1)
