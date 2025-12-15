@@ -1,2 +1,7 @@
 # 機密情報はGit管理対象外
 credentials.json
+
+# Pythonファイル以外は対象外
+*
+!*.py
+!.gitignore
