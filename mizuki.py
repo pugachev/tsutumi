@@ -17,15 +17,16 @@ SCOPES = [
 ]
 
 # フォルダ監視対象
-WATCH_FOLDER = r"/Users/ikefuku40/ugaki"
+WATCH_FOLDER = r"/Users/ikefuku40/mizuki"
 
 # ★ここに有効なアルバムIDを固定で設定（create_albumで取得したもの）
-ALBUM_ID = "AKIE58x36-StaOKhek0qSdoOrCpQVJxwToWXh4Q8lWPa_OX0xQcdfB-YZKdmwomG6t4-Jvt22A-9"
+ALBUM_ID = "AKIE58zncSoBHajqIicSbb56yxk8tqWrnh4aRDLxYVrYkW72eT54gq5Nui51deSQyXP1y62kGne-"
 
 # 認証処理
 def get_credentials():
-    # LaunchAgent環境かどうかを確認
-    is_launch_agent = os.environ.get('XPC_SERVICE_NAME') is not None
+    import sys
+    # LaunchAgent環境かどうかを確認（標準入力が利用可能でない場合）
+    is_launch_agent = os.environ.get('XPC_SERVICE_NAME') is not None and not sys.stdin.isatty()
     
     creds = None
     if os.path.exists('token.pickle'):
@@ -53,14 +54,14 @@ def get_credentials():
                     print("LaunchAgent環境では自動再認証ができません。")
                     print("以下の手順で手動で再認証を行ってください：")
                     print("1. ターミナルで以下を実行:")
-                    print("   cd /Users/ikefuku40/ugaki")
+                    print("   cd /Users/ikefuku40/mizuki")
                     print("   rm token.pickle")
-                    print("   python3 ugaki.py")
+                    print("   python3 mizuki.py")
                     print("2. ブラウザで認証を完了")
                     print("3. 認証完了後、Ctrl+Cで終了")
                     print("4. LaunchAgentを再起動:")
-                    print("   launchctl unload ~/Library/LaunchAgents/com.ikefuku40.ugaki.plist")
-                    print("   launchctl load ~/Library/LaunchAgents/com.ikefuku40.ugaki.plist")
+                    print("   launchctl unload ~/Library/LaunchAgents/com.ikefuku40.mizuki.plist")
+                    print("   launchctl load ~/Library/LaunchAgents/com.ikefuku40.mizuki.plist")
                     print("=" * 60)
                     raise Exception("認証が必要です。上記の手順に従って再認証してください。")
                 else:
@@ -286,6 +287,9 @@ if __name__ == "__main__":
         if not creds:
             print("✗ 認証に失敗しました。スクリプトを終了します。")
             exit(1)
+        album_id = create_album(creds, "杉浦みずき")
+        #print(f"create_albumの戻り値: {album_id}")
+        #exit(0)
         
         print("✓ 認証成功。監視を開始します。")
         event_handler = PhotoHandler(creds, ALBUM_ID)
